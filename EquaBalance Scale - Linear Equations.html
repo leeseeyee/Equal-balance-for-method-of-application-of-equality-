@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EquaBalance Scale - Linear Equations</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;700&display=swap');
+    
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      user-select: none;
+    }
+    
+    .font-fredoka { font-family: 'Fredoka One', cursive; }
+
+    /* SVG Scale Balance Rotation Transition */
+    .scale-beam {
+      transform-origin: 250px 115px;
+      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .scale-pan-left {
+      transform-origin: 75px 115px;
+      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .scale-pan-right {
+      transform-origin: 425px 115px;
+      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* 3D Shapes Styles */
+    .cube-x {
+      background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+      border: 2px solid #818cf8;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+    }
+
+    /* Redesigned 1/2 x Sliced Cube (Clear half-block representation) */
+    .cube-sliced-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #a855f7 0%, #6b21a8 100%);
+      border: 2px solid #c084fc;
+      border-right: 3px solid #f0abfc; /* Cut surface indicator */
+      box-shadow: 0 4px 8px -1px rgba(168, 85, 247, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .cube-sliced-container::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 6px #f0abfc;
+    }
+
+    .sphere-unit {
+      background: radial-gradient(circle at 35% 35%, #34d399, #059669);
+      border: 1px solid #10b981;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), inset -2px -2px 4px rgba(0, 0, 0, 0.4);
+      border-radius: 50%;
+    }
+
+    /* Dashed circle cutouts for x - n */
+    .dashed-cutout {
+      width: 12px;
+      height: 12px;
+      border: 2px dashed rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Speech Bubble Animation */
+    .speech-bubble {
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-origin: bottom center;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0) translateY(10px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* Hand Animation Overlay */
+    .hand-anim {
+      position: absolute;
+      font-size: 2.5rem;
+      z-index: 50;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.5s ease-in-out;
+    }
+
+    .hand-anim.active {
+      opacity: 1;
+      transform: translateY(-10px);
+    }
+
+    /* Classroom Chalkboard */
+    .chalkboard {
+      background: #1e293b;
+      border: 8px solid #334155;
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      font-family: 'Fredoka One', cursive;
+      color: #f1f5f9;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4">
+
+  <!-- Header -->
+  <header class="w-full max-w-2xl flex items-center justify-between mb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-2xl shadow-lg">⚖️</div>
+      <h1 class="text-2xl font-fredoka text-indigo-400 tracking-wide">EquaBalance Scale</h1>
+    </div>
+    <button id="btn-reset" class="bg-rose-600 hover:bg-rose-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition shadow-md flex items-center gap-1">
+      🔄 Reset
+    </button>
+  </header>
+
+  <!-- Equation Input & Presets -->
+  <main class="w-full max-w-2xl bg-slate-800/80 rounded-2xl p-4 border border-slate-700 shadow-xl mb-4">
+    <div class="flex flex-col sm:flex-row items-center gap-3 mb-3">
+      <label class="text-slate-300 font-bold text-sm whitespace-nowrap">TYPE EQUATION:</label>
+      <input id="eq-input" type="text" value="x - 2 = 4" placeholder="e.g. 2x + 3 = 7" class="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2 text-indigo-300 font-bold focus:outline-none focus:border-indigo-500 text-center text-lg">
+      <button id="btn-load" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2 rounded-xl text-sm transition shadow-md">
+        Load
+      </button>
+    </div>
+    <div class="flex flex-wrap gap-2 justify-center">
+      <span class="text-xs text-slate-400 self-center font-bold">Presets:</span>
+      <button class="btn-preset bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 font-bold" data-eq="x - 2 = 4">x - 2 = 4</button>
+      <button class="btn-preset bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 font-bold" data-eq="2x + 3 = 7">2x + 3 = 7</button>
+      <button class="btn-preset bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 font-bold" data-eq="3x = 6">3x = 6</button>
+      <button class="btn-preset bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 font-bold" data-eq="1/2x = 4">1/2x = 4</button>
+      <button class="btn-preset bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-1.5 rounded-lg border border-slate-600 font-bold" data-eq="10x - 2 = 8">10x - 2 = 8</button>
+    </div>
+  </main>
+
+  <!-- Balance Scale Canvas Graphic -->
+  <div class="relative w-full max-w-2xl bg-slate-900 rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-col items-center justify-center min-h-[340px] overflow-hidden mb-4">
+    
+    <!-- Speech Bubble Pop-out -->
+    <div id="speech-bubble" class="absolute top-6 right-10 z-20 speech-bubble hidden">
+      <div class="bg-amber-400 text-slate-950 font-fredoka px-4 py-2 rounded-2xl shadow-xl border-2 border-amber-300 text-sm flex items-center gap-2 relative">
+        <span class="text-lg">😮</span>
+        <span id="bubble-text">Oh noooo! Unbalanced!</span>
+        <div class="absolute -bottom-2 left-6 w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-t-[8px] border-t-amber-400"></div>
+      </div>
+    </div>
+
+    <!-- Animated Hands Container -->
+    <div id="hand-left" class="hand-anim top-12 left-16">🖐️</div>
+    <div id="hand-right" class="hand-anim top-12 right-16">🖐️</div>
+
+    <!-- SVG Balance Scale -->
+    <svg viewBox="0 0 500 260" class="w-full max-w-[480px] h-auto drop-shadow-2xl">
+      <!-- Base & Stand -->
+      <path d="M 210 240 L 290 240 L 265 115 L 235 115 Z" fill="#334155" />
+      <path d="M 200 245 C 200 240 300 240 300 245 L 310 250 L 190 250 Z" fill="#1e293b" />
+      <circle cx="250" cy="115" r="14" fill="#475569" stroke="#64748b" stroke-width="3"/>
+
+      <!-- Dial Indicator -->
+      <path d="M 225 115 A 25 25 0 0 1 275 115 Z" fill="#1e293b" stroke="#475569" stroke-width="2" />
+      <line id="dial-needle" x1="250" y1="115" x2="250" y2="95" stroke="#ef4444" stroke-width="3" stroke-linecap="round" style="transform-origin: 250px 115px; transition: transform 0.8s ease;" />
+
+      <!-- Rotating Beam Group -->
+      <g id="scale-beam-group" class="scale-beam">
+        <rect x="65" y="110" width="370" height="10" rx="5" fill="#475569" />
+
+        <!-- Left Pan Assembly -->
+        <g id="scale-pan-left-group" class="scale-pan-left">
+          <line x1="75" y1="115" x2="40" y2="175" stroke="#94a3b8" stroke-width="2" />
+          <line x1="75" y1="115" x2="110" y2="175" stroke="#94a3b8" stroke-width="2" />
+          <!-- Pan Dish -->
+          <path d="M 30 175 Q 75 195 120 175 Z" fill="#334155" stroke="#64748b" stroke-width="2" />
+          <!-- Foreign Object Container for Blocks -->
+          <foreignObject x="25" y="90" width="100" height="85">
+            <div xmlns="http://www.w3.org/1999/xhtml" id="pan-left-container" class="w-full h-full flex flex-wrap-reverse content-start justify-center gap-1 p-1 items-end">
+              <!-- Left blocks rendered here -->
+            </div>
+          </foreignObject>
+        </g>
+
+        <!-- Right Pan Assembly -->
+        <g id="scale-pan-right-group" class="scale-pan-right">
+          <line x1="425" y1="115" x2="390" y2="175" stroke="#94a3b8" stroke-width="2" />
+          <line x1="425" y1="115" x2="460" y2="175" stroke="#94a3b8" stroke-width="2" />
+          <!-- Pan Dish -->
+          <path d="M 380 175 Q 425 195 470 175 Z" fill="#334155" stroke="#64748b" stroke-width="2" />
+          <!-- Foreign Object Container for Blocks -->
+          <foreignObject x="375" y="90" width="100" height="85">
+            <div xmlns="http://www.w3.org/1999/xhtml" id="pan-right-container" class="w-full h-full flex flex-wrap-reverse content-start justify-center gap-1 p-1 items-end">
+              <!-- Right blocks rendered here -->
+            </div>
+          </foreignObject>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Operations Panel for Both Sides -->
+  <section class="w-full max-w-2xl bg-slate-800/90 rounded-2xl p-4 border border-slate-700 shadow-xl mb-4">
+    <div class="text-xs font-bold text-slate-400 mb-3 tracking-wider uppercase flex items-center justify-between">
+      <span>⚡ Operations For Both Sides</span>
+      <span class="text-slate-500 text-[10px] hidden sm:inline">(Apply algebraically to keep scale balanced)</span>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+      <button id="btn-add-1" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-sm transition shadow flex items-center justify-center gap-1">
+        ➕ Add 1
+      </button>
+      <button id="btn-sub-1" class="bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-sm transition shadow flex items-center justify-center gap-1">
+        ➖ Remove 1
+      </button>
+      <button id="btn-add-x" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-sm transition shadow flex items-center justify-center gap-1">
+        ➕ Add x
+      </button>
+      <button id="btn-sub-x" class="bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-bold py-2 px-3 rounded-xl text-sm transition shadow flex items-center justify-center gap-1">
+        ➖ Remove x
+      </button>
+    </div>
+
+    <!-- Factor n Multiplication / Division -->
+    <div class="flex items-center gap-3 bg-slate-900/80 p-3 rounded-xl border border-slate-700/60">
+      <span class="text-slate-300 font-bold text-xs whitespace-nowrap">FACTOR (n):</span>
+      <input id="input-n" type="number" min="1" max="10" value="2" class="w-16 bg-slate-800 border border-slate-600 rounded-lg text-center font-bold text-indigo-300 py-1 text-sm focus:outline-none">
+      <div class="flex-1 grid grid-cols-2 gap-2">
+        <button id="btn-mul-n" class="bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow">
+          ✖️ Multiply (× n)
+        </button>
+        <button id="btn-div-n" class="bg-cyan-600 hover:bg-cyan-500 active:scale-95 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition shadow">
+          ➗ Divide (÷ n)
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Classroom Whiteboard Step Log -->
+  <section class="w-full max-w-2xl chalkboard rounded-2xl p-5 mb-6">
+    <div class="text-slate-400 text-xs font-bold tracking-widest uppercase mb-2 flex items-center justify-between border-b border-slate-700 pb-2">
+      <span>📋 CLASSROOM STEP DERIVATION</span>
+      <span id="equation-status" class="text-emerald-400 font-bold">BALANCED</span>
+    </div>
+    <div id="board-steps" class="flex flex-col items-center gap-2 py-2 min-h-[100px] text-lg sm:text-xl">
+      <!-- Chalkboard step lines auto-generated here -->
+    </div>
+  </section>
+
+  <script>
+    // State Variables
+    let leftState = { xCoef: 1, unitVal: -2 };
+    let rightState = { xCoef: 0, unitVal: 4 };
+    let stepLogs = [];
+
+    // Audio Synthesizer Effects
+    const playSound = (freq = 440, type = 'sine', duration = 0.15) => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    };
+
+    // Parser for Custom Equation
+    function parseEquation(str) {
+      const parts = str.replace(/\s+/g, '').split('=');
+      if (parts.length !== 2) return null;
+
+      const parseSide = (sideStr) => {
+        let xCoef = 0, unitVal = 0;
+        const tokens = sideStr.match(/([+-]?[^+-]+)/g) || [];
+        tokens.forEach(tok => {
+          if (tok.includes('x')) {
+            let coefStr = tok.replace('x', '');
+            if (coefStr === '' || coefStr === '+') xCoef += 1;
+            else if (coefStr === '-') xCoef -= 1;
+            else if (coefStr.includes('/')) {
+              const [n, d] = coefStr.split('/').map(Number);
+              xCoef += (n / (d || 1));
+            } else {
+              xCoef += parseFloat(coefStr);
+            }
+          } else {
+            unitVal += parseFloat(tok) || 0;
+          }
+        });
+        return { xCoef, unitVal };
+      };
+
+      return { left: parseSide(parts[0]), right: parseSide(parts[1]) };
+    }
+
+    // Format Term for Blackboard Output
+    function formatSideText(state) {
+      let terms = [];
+      if (state.xCoef !== 0) {
+        if (state.xCoef === 1) terms.push("x");
+        else if (state.xCoef === 0.5) terms.push("½x");
+        else if (Math.abs(state.xCoef - 0.33) < 0.05) terms.push("⅓x");
+        else terms.push(`${Number(state.xCoef.toFixed(2))}x`);
+      }
+      if (state.unitVal !== 0 || terms.length === 0) {
+        const roundedVal = Number(state.unitVal.toFixed(2));
+        if (terms.length > 0 && roundedVal > 0) {
+          terms.push(`+ ${roundedVal}`);
+        } else if (terms.length > 0 && roundedVal < 0) {
+          terms.push(`- ${Math.abs(roundedVal)}`);
+        } else {
+          terms.push(`${roundedVal}`);
+        }
+      }
+      return terms.join(" ");
+    }
+
+    // Calculate Physical Weights
+    function getWeights() {
+      // Assuming target solution value for x based on balanced state or fallback = 6
+      let xWeight = 6;
+      if (leftState.xCoef !== rightState.xCoef) {
+        const calculatedX = (rightState.unitVal - leftState.unitVal) / (leftState.xCoef - rightState.xCoef);
+        if (!isNaN(calculatedX) && isFinite(calculatedX)) {
+          xWeight = calculatedX;
+        }
+      }
+      const leftW = leftState.xCoef * xWeight + leftState.unitVal;
+      const rightW = rightState.xCoef * xWeight + rightState.unitVal;
+      return { leftW, rightW, diff: leftW - rightW };
+    }
+
+    // Render Blocks in Pans
+    function renderPan(containerId, state) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+
+      const totalCount = Math.abs(state.xCoef) + Math.abs(state.unitVal);
+      let sizeClass = "w-7 h-7 text-xs";
+      let sizePx = 28; // Standard block dimension in px
+      if (totalCount > 8) { sizeClass = "w-6 h-6 text-[10px]"; sizePx = 24; }
+      if (totalCount > 15) { sizeClass = "w-5 h-5 text-[8px]"; sizePx = 20; }
+
+      // Render x Blocks
+      if (state.xCoef > 0) {
+        const fullCubes = Math.floor(state.xCoef);
+        for (let i = 0; i < fullCubes; i++) {
+          const cube = document.createElement('div');
+          cube.className = `${sizeClass} cube-x text-white font-fredoka flex items-center justify-center shadow cursor-pointer select-none relative transition-transform hover:scale-105`;
+          cube.innerText = 'x';
+          
+          if (state.unitVal < 0) {
+            const cutCount = Math.min(Math.abs(Math.round(state.unitVal)), 3);
+            const cutoutBox = document.createElement('div');
+            cutoutBox.className = "absolute inset-0 flex items-center justify-around px-0.5 pointer-events-none opacity-80";
+            for (let c = 0; c < cutCount; c++) {
+              const circle = document.createElement('div');
+              circle.className = "dashed-cutout";
+              cutoutBox.appendChild(circle);
+            }
+            cube.appendChild(cutoutBox);
+          }
+
+          container.appendChild(cube);
+        }
+
+        // Fractional x (1/2 x, 1/3 x, etc.) - Dynamic Half-Block UI
+        const frac = state.xCoef % 1;
+        if (frac > 0.05) {
+          const fracVal = Number(frac.toFixed(2));
+          const fracCube = document.createElement('div');
+          
+          // Width scaled accurately according to fraction (e.g. 1/2 x gets half width of full x cube)
+          const fracWidthPx = Math.max(16, Math.round(sizePx * Math.min(fracVal, 0.85)));
+          
+          fracCube.className = `cube-sliced-container text-fuchsia-100 font-fredoka flex items-center justify-center shadow select-none cursor-pointer hover:scale-105`;
+          fracCube.style.height = `${sizePx}px`;
+          fracCube.style.width = `${fracWidthPx}px`;
+          fracCube.style.fontSize = sizePx <= 20 ? '8px' : '10px';
+
+          // Text representation
+          let fracText = `${fracVal}x`;
+          if (Math.abs(fracVal - 0.5) < 0.05) fracText = '½x';
+          else if (Math.abs(fracVal - 0.33) < 0.05) fracText = '⅓x';
+          else if (Math.abs(fracVal - 0.25) < 0.05) fracText = '¼x';
+
+          fracCube.innerText = fracText;
+          container.appendChild(fracCube);
+        }
+      }
+
+      // Render Constant Sphere Unit Blocks (1)
+      if (state.unitVal > 0) {
+        const units = Math.round(state.unitVal);
+        for (let i = 0; i < units; i++) {
+          const sphere = document.createElement('div');
+          sphere.className = `${sizeClass} sphere-unit text-white font-fredoka flex items-center justify-center shadow cursor-pointer transition transform hover:scale-110 select-none`;
+          sphere.innerText = '1';
+          
+          sphere.onclick = () => {
+            if (containerId === 'pan-left-container') leftState.unitVal--;
+            else rightState.unitVal--;
+            playSound(350, 'triangle');
+            logStep(`Removed 1 from ${containerId === 'pan-left-container' ? 'Left' : 'Right'}`);
+            updateUI();
+          };
+          container.appendChild(sphere);
+        }
+      }
+    }
+
+    // Update Physical Balance & Animations
+    function updateScalePhysics() {
+      const { diff } = getWeights();
+      const maxAngle = 12;
+      const angle = Math.max(-maxAngle, Math.min(maxAngle, diff * 2.5));
+
+      document.getElementById('scale-beam-group').style.transform = `rotate(${angle}deg)`;
+      document.getElementById('scale-pan-left-group').style.transform = `rotate(${-angle}deg)`;
+      document.getElementById('scale-pan-right-group').style.transform = `rotate(${-angle}deg)`;
+      document.getElementById('dial-needle').style.transform = `rotate(${angle * 1.5}deg)`;
+
+      const bubble = document.getElementById('speech-bubble');
+      const statusEl = document.getElementById('equation-status');
+
+      if (Math.abs(diff) < 0.1) {
+        bubble.classList.add('hidden');
+        statusEl.innerText = "BALANCED";
+        statusEl.className = "text-emerald-400 font-bold";
+
+        // Check Victory Condition (x = number or number = x)
+        if ((leftState.xCoef === 1 && leftState.unitVal === 0 && rightState.xCoef === 0) ||
+            (rightState.xCoef === 1 && rightState.unitVal === 0 && leftState.xCoef === 0)) {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+          playSound(587.33, 'sine', 0.4);
+        }
+      } else {
+        bubble.classList.remove('hidden');
+        statusEl.innerText = "UNBALANCED";
+        statusEl.className = "text-rose-400 font-bold";
+        playSound(220, 'sawtooth', 0.1);
+      }
+    }
+
+    // Classroom Blackboard Logger with Step Summarization
+    function logStep(opText) {
+      const leftStr = formatSideText(leftState);
+      const rightStr = formatSideText(rightState);
+
+      if (stepLogs.length > 0 && opText.startsWith('↓')) {
+        const last = stepLogs[stepLogs.length - 1];
+        if (last.type === opText) {
+          last.count = (last.count || 1) + 1;
+          last.leftStr = leftStr;
+          last.rightStr = rightStr;
+          renderBoard();
+          return;
+        }
+      }
+
+      stepLogs.push({ type: opText, leftStr, rightStr, count: 1 });
+      renderBoard();
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('board-steps');
+      board.innerHTML = '';
+
+      stepLogs.forEach((log, index) => {
+        const row = document.createElement('div');
+        row.className = "flex flex-col items-center w-full";
+
+        if (index > 0) {
+          const arrow = document.createElement('div');
+          arrow.className = "text-amber-400 text-sm font-bold flex items-center gap-1 my-0.5";
+          let opDisplay = log.type;
+          if (log.count > 1) {
+            const num = parseFloat(log.type.replace(/[^0-9.]/g, '')) || 1;
+            const opSymbol = log.type.includes('+') ? '+' : (log.type.includes('-') ? '-' : '');
+            if (opSymbol) {
+              opDisplay = `↓ ${opSymbol} ${num * log.count}`;
+            }
+          }
+          arrow.innerText = opDisplay;
+          row.appendChild(arrow);
+        }
+
+        const eqLine = document.createElement('div');
+        eqLine.className = "text-indigo-200 tracking-wider font-bold";
+        eqLine.innerText = `${log.leftStr} = ${log.rightStr}`;
+        row.appendChild(eqLine);
+
+        board.appendChild(row);
+      });
+    }
+
+    // Refresh UI Components
+    function updateUI() {
+      renderPan('pan-left-container', leftState);
+      renderPan('pan-right-container', rightState);
+      updateScalePhysics();
+    }
+
+    // Dual Hand Animation Trigger
+    function triggerHandAnim() {
+      const hLeft = document.getElementById('hand-left');
+      const hRight = document.getElementById('hand-right');
+      hLeft.classList.add('active');
+      hRight.classList.add('active');
+      setTimeout(() => {
+        hLeft.classList.remove('active');
+        hRight.classList.remove('active');
+      }, 500);
+    }
+
+    // Event Handlers for Dual-Side Operations
+    document.getElementById('btn-add-1').onclick = () => {
+      leftState.unitVal++;
+      rightState.unitVal++;
+      triggerHandAnim();
+      playSound(440);
+      logStep('↓ + 1');
+      updateUI();
+    };
+
+    document.getElementById('btn-sub-1').onclick = () => {
+      leftState.unitVal--;
+      rightState.unitVal--;
+      triggerHandAnim();
+      playSound(380);
+      logStep('↓ - 1');
+      updateUI();
+    };
+
+    document.getElementById('btn-add-x').onclick = () => {
+      leftState.xCoef++;
+      rightState.xCoef++;
+      triggerHandAnim();
+      playSound(520);
+      logStep('↓ + x');
+      updateUI();
+    };
+
+    document.getElementById('btn-sub-x').onclick = () => {
+      if (leftState.xCoef > 0 && rightState.xCoef > 0) {
+        leftState.xCoef--;
+        rightState.xCoef--;
+        triggerHandAnim();
+        playSound(330);
+        logStep('↓ - x');
+        updateUI();
+      }
+    };
+
+    document.getElementById('btn-mul-n').onclick = () => {
+      const n = parseFloat(document.getElementById('input-n').value) || 2;
+      leftState.xCoef *= n;
+      leftState.unitVal *= n;
+      rightState.xCoef *= n;
+      rightState.unitVal *= n;
+      triggerHandAnim();
+      playSound(600);
+      logStep(`↓ × ${n}`);
+      updateUI();
+    };
+
+    document.getElementById('btn-div-n').onclick = () => {
+      const n = parseFloat(document.getElementById('input-n').value) || 2;
+      if (n !== 0) {
+        leftState.xCoef /= n;
+        leftState.unitVal /= n;
+        rightState.xCoef /= n;
+        rightState.unitVal /= n;
+        triggerHandAnim();
+        playSound(280);
+        logStep(`↓ ÷ ${n}`);
+        updateUI();
+      }
+    };
+
+    // Load Custom Equation
+    function loadEquation(eqStr) {
+      const parsed = parseEquation(eqStr);
+      if (parsed) {
+        leftState = parsed.left;
+        rightState = parsed.right;
+        stepLogs = [];
+        logStep('Initial Equation');
+        updateUI();
+      }
+    }
+
+    document.getElementById('btn-load').onclick = () => {
+      loadEquation(document.getElementById('eq-input').value);
+    };
+
+    document.querySelectorAll('.btn-preset').forEach(btn => {
+      btn.onclick = () => {
+        const eq = btn.getAttribute('data-eq');
+        document.getElementById('eq-input').value = eq;
+        loadEquation(eq);
+      };
+    });
+
+    document.getElementById('btn-reset').onclick = () => {
+      loadEquation(document.getElementById('eq-input').value);
+    };
+
+    // Initial Load
+    loadEquation('x - 2 = 4');
+  </script>
+</body>
+</html>
