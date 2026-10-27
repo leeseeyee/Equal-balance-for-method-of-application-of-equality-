@@ -17,10 +17,9 @@
     }
     .font-fredoka { font-family: 'Fredoka', sans-serif; }
 
-    /* Custom Scrollbar for Chalkboard */
+    /* Custom Scrollbar */
     .chalkboard-scroll::-webkit-scrollbar { width: 6px; }
     .chalkboard-scroll::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
-    .chalkboard-scroll::-webkit-scrollbar-gradient { background: #334155; }
     .chalkboard-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 
     /* Scale Physics Animations */
@@ -28,7 +27,7 @@
       transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* Interactive Hand Pointer Animations */
+    /* Hand Pointer Animations */
     .hand-anim {
       transition: transform 0.4s ease, opacity 0.3s ease;
       opacity: 0;
@@ -39,7 +38,7 @@
       transform: translateY(-10px) scale(1.1);
     }
 
-    /* Custom 3D Blocks Styling (Positive x) */
+    /* Solid x Cube (+x) */
     .cube-x {
       background: linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), inset -2px -2px 4px rgba(0, 0, 0, 0.4), inset 2px 2px 4px rgba(255, 255, 255, 0.3);
@@ -48,7 +47,7 @@
       position: relative;
     }
 
-    /* Fractional x block container */
+    /* Fractional x block */
     .cube-sliced-container {
       background: linear-gradient(135deg, #c026d3 0%, #9333ea 100%);
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), inset -2px -2px 4px rgba(0, 0, 0, 0.4), inset 2px 2px 4px rgba(255, 255, 255, 0.3);
@@ -64,12 +63,12 @@
       border: 1px solid #34d399;
     }
 
-    /* Negative Unit Hole Cutout (Hole with -1 hole effect) */
+    /* Negative Unit Cutout Hole (-1) */
     .hole-unit {
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px dashed #f43f5e;
-      color: #f43f5e;
-      box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.8), 0 0 4px rgba(244, 63, 94, 0.3);
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px dashed #ef4444;
+      color: #f87171;
+      box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.95), 0 0 6px rgba(239, 68, 68, 0.4);
       border-radius: 50%;
       position: relative;
     }
@@ -145,7 +144,7 @@
             <span id="mascot-text">Apply operations on both sides to isolate x!</span>
           </div>
           <div id="balance-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-700 border border-slate-600">
-            Status: <span id="equation-status" class="text-emerald-400">Balanced</span>
+            Status: <span id="equation-status" class="text-emerald-400">BALANCED</span>
           </div>
         </div>
 
@@ -207,7 +206,7 @@
         <div id="board-steps" class="chalkboard-scroll my-3 flex-1 min-h-[180px] max-h-[250px] overflow-y-auto flex flex-col gap-2 font-mono text-xs md:text-sm text-slate-300">
         </div>
 
-        <p class="text-[11px] text-slate-500 text-center italic">
+        <p id="side-tip-text" class="text-[11px] text-slate-400 text-center italic">
           Whatever operation you apply to one side must be applied to the other side to keep equality!
         </p>
       </section>
@@ -215,13 +214,26 @@
 
     <!-- Bottom Operations Toolbar -->
     <section class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur flex flex-col gap-3">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
-          <span>⚡</span> Operations For Both Sides
+          <span>⚡</span> Action Target Side:
         </h3>
-        <span class="text-[11px] text-slate-400">(Apply algebraically to keep scale balanced)</span>
+        
+        <!-- Target Mode Selector (Both Sides vs Left Only vs Right Only) -->
+        <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-700 w-full sm:w-auto">
+          <button id="target-both" class="flex-1 sm:flex-none px-3 py-1 bg-indigo-600 text-white font-bold rounded-lg text-xs transition">
+            ⚖️ Both Sides (Equal)
+          </button>
+          <button id="target-left" class="flex-1 sm:flex-none px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs transition">
+            👈 Left Side Only
+          </button>
+          <button id="target-right" class="flex-1 sm:flex-none px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs transition">
+            👉 Right Side Only
+          </button>
+        </div>
       </div>
 
+      <!-- Action Buttons -->
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
         <button id="btn-add-1" class="px-3 py-2.5 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-semibold rounded-xl text-xs md:text-sm transition flex items-center justify-center gap-1 shadow-md">
           <span>+ 1</span>
@@ -278,8 +290,9 @@
     let leftState = { xCoef: 1, unitVal: 0 };
     let rightState = { xCoef: 0, unitVal: 0 };
     let stepLogs = [];
+    let activeTargetMode = 'both'; // 'both', 'left', 'right'
 
-    // Global evaluated value of x (assuming solution from original equation)
+    // Value of x calculated from initial equation
     let solvedXValue = 1;
 
     function parseSide(sideStr) {
@@ -317,20 +330,18 @@
       const left = parseSide(parts[0]);
       const right = parseSide(parts[1]);
 
-      // Calculate initial solution value for x: (right.unitVal - left.unitVal) / (left.xCoef - right.xCoef)
       const xDiff = left.xCoef - right.xCoef;
       const uDiff = right.unitVal - left.unitVal;
       if (xDiff !== 0) {
         solvedXValue = uDiff / xDiff;
       } else {
-        solvedXValue = 1; // default fallback
+        solvedXValue = 1;
       }
 
       return { left, right };
     }
 
-    // ACCURATE PHYSICAL WEIGHT: Weight = xCoef * solvedXValue + unitVal
-    // Subtracting 2 means subtracting 2 units of physical weight!
+    // Dynamic Physical Weight: Weight = xCoef * solvedXValue + unitVal
     function getWeights() {
       const leftW = leftState.xCoef * solvedXValue + leftState.unitVal;
       const rightW = rightState.xCoef * solvedXValue + rightState.unitVal;
@@ -364,7 +375,7 @@
       return parts.join(' ');
     }
 
-    // Render Balance Pans (Includes "Hole" Cutouts for Negative Constants)
+    // Render Pan Items (+1 sphere, -1 hole cutout, positive x cube, fractional x)
     function renderPan(containerId, state) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
@@ -373,17 +384,16 @@
       const absUnit = Math.abs(state.unitVal);
       const totalCount = absX + absUnit;
 
-      // Smart responsive sizing for items
+      // Smart Responsive Dynamic Item Size Calculation
       let sizeClass = "w-7 h-7 text-xs";
       let sizePx = 28;
       if (totalCount > 8) { sizeClass = "w-6 h-6 text-[10px]"; sizePx = 24; }
       if (totalCount > 12) { sizeClass = "w-5 h-5 text-[8px]"; sizePx = 20; }
       if (totalCount > 16) { sizeClass = "w-4 h-4 text-[7px]"; sizePx = 16; }
 
-      // 1. Render x Variable Cubes
+      // 1. Render x Cubes
       if (state.xCoef > 0) {
         const fullCubes = Math.floor(state.xCoef);
-
         for (let i = 0; i < fullCubes; i++) {
           const cube = document.createElement('div');
           cube.className = `${sizeClass} cube-x text-white font-fredoka flex items-center justify-center shadow select-none flex-shrink-0`;
@@ -391,7 +401,6 @@
           container.appendChild(cube);
         }
 
-        // Fractional x
         const frac = state.xCoef % 1;
         if (frac > 0.05) {
           const fracVal = Number(frac.toFixed(2));
@@ -413,7 +422,7 @@
         }
       }
 
-      // 2. Render Constant Units (+1 or -1 Hole Cutouts)
+      // 2. Render Units (+1 Spheres vs -1 Hole Cutouts)
       if (state.unitVal > 0) {
         const units = Math.round(state.unitVal);
         for (let i = 0; i < units; i++) {
@@ -423,22 +432,22 @@
           container.appendChild(sphere);
         }
       } else if (state.unitVal < 0) {
-        // Render Hole Cutout Spheres (-1 Holes)
+        // Cutout Hole Spheres (-1)
         const holeUnits = Math.abs(Math.round(state.unitVal));
         for (let i = 0; i < holeUnits; i++) {
           const holeSphere = document.createElement('div');
           holeSphere.className = `${sizeClass} hole-unit font-fredoka flex items-center justify-center shadow select-none flex-shrink-0`;
           holeSphere.innerText = '-1';
-          holeSphere.title = "Hole cutout (Missing weight)";
+          holeSphere.title = "Cutout hole (-1 weight)";
           container.appendChild(holeSphere);
         }
       }
     }
 
-    // Scale Physics Update
+    // Scale Physics Update (Tilt Beam based on actual weight difference)
     function updateScalePhysics() {
       const { diff } = getWeights();
-      const maxAngle = 12;
+      const maxAngle = 14;
       const angle = Math.max(-maxAngle, Math.min(maxAngle, diff * 2.5));
 
       document.getElementById('scale-beam-group').style.transform = `rotate(${angle}deg)`;
@@ -447,12 +456,14 @@
       document.getElementById('dial-needle').style.transform = `rotate(${angle * 1.5}deg)`;
 
       const bubble = document.getElementById('speech-bubble');
+      const mascotText = document.getElementById('mascot-text');
       const statusEl = document.getElementById('equation-status');
 
       if (Math.abs(diff) < 0.01) {
-        bubble.classList.add('hidden');
         statusEl.innerText = "BALANCED";
         statusEl.className = "text-emerald-400 font-bold";
+        mascotText.innerText = "Scale is balanced! Equality is preserved.";
+        bubble.className = "speech-bubble bg-emerald-900/90 border border-emerald-500 text-emerald-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
 
         if ((leftState.xCoef === 1 && leftState.unitVal === 0 && rightState.xCoef === 0) ||
             (rightState.xCoef === 1 && rightState.unitVal === 0 && leftState.xCoef === 0)) {
@@ -460,9 +471,14 @@
           playSound(587.33, 'sine', 0.4);
         }
       } else {
-        bubble.classList.remove('hidden');
         statusEl.innerText = "UNBALANCED";
         statusEl.className = "text-rose-400 font-bold";
+        if (diff > 0) {
+          mascotText.innerText = "⚠️ Unbalanced! Left side is heavier.";
+        } else {
+          mascotText.innerText = "⚠️ Unbalanced! Right side is heavier.";
+        }
+        bubble.className = "speech-bubble bg-rose-900/90 border border-rose-500 text-rose-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
         playSound(220, 'sawtooth', 0.1);
       }
     }
@@ -471,18 +487,9 @@
       const leftStr = formatSideText(leftState);
       const rightStr = formatSideText(rightState);
 
-      if (stepLogs.length > 0 && opText.startsWith('↓')) {
-        const last = stepLogs[stepLogs.length - 1];
-        if (last.type === opText) {
-          last.count = (last.count || 1) + 1;
-          last.leftStr = leftStr;
-          last.rightStr = rightStr;
-          renderBoard();
-          return;
-        }
-      }
+      const eqSymbol = Math.abs(getWeights().diff) < 0.01 ? '=' : '≠';
 
-      stepLogs.push({ type: opText, leftStr, rightStr, count: 1 });
+      stepLogs.push({ type: opText, leftStr, rightStr, eqSymbol });
       renderBoard();
     }
 
@@ -496,26 +503,20 @@
 
         if (index > 0) {
           const arrow = document.createElement('div');
-          arrow.className = "text-amber-400 text-sm font-bold flex items-center gap-1 my-0.5";
-          let opDisplay = log.type;
-          if (log.count > 1) {
-            const num = parseFloat(log.type.replace(/[^0-9.]/g, '')) || 1;
-            const opSymbol = log.type.includes('+') ? '+' : (log.type.includes('-') ? '-' : '');
-            if (opSymbol) {
-              opDisplay = `↓ ${opSymbol} ${num * log.count}`;
-            }
-          }
-          arrow.innerText = opDisplay;
+          arrow.className = log.eqSymbol === '≠' ? "text-rose-400 text-xs font-bold flex items-center gap-1 my-0.5" : "text-amber-400 text-xs font-bold flex items-center gap-1 my-0.5";
+          arrow.innerText = log.type;
           row.appendChild(arrow);
         }
 
         const eqLine = document.createElement('div');
-        eqLine.className = "text-indigo-200 tracking-wider font-bold";
-        eqLine.innerText = `${log.leftStr} = ${log.rightStr}`;
+        eqLine.className = log.eqSymbol === '≠' ? "text-rose-300 tracking-wider font-bold" : "text-indigo-200 tracking-wider font-bold";
+        eqLine.innerText = `${log.leftStr} ${log.eqSymbol} ${log.rightStr}`;
         row.appendChild(eqLine);
 
         board.appendChild(row);
       });
+
+      board.scrollTop = board.scrollHeight;
     }
 
     function updateUI() {
@@ -524,79 +525,94 @@
       updateScalePhysics();
     }
 
-    function triggerHandAnim() {
+    function triggerHandAnim(target) {
       const hLeft = document.getElementById('hand-left');
       const hRight = document.getElementById('hand-right');
-      hLeft.classList.add('active');
-      hRight.classList.add('active');
+      
+      if (target === 'both' || target === 'left') hLeft.classList.add('active');
+      if (target === 'both' || target === 'right') hRight.classList.add('active');
+      
       setTimeout(() => {
         hLeft.classList.remove('active');
         hRight.classList.remove('active');
       }, 500);
     }
 
-    // Operations Toolbar
-    document.getElementById('btn-add-1').onclick = () => {
-      leftState.unitVal++;
-      rightState.unitVal++;
-      triggerHandAnim();
+    // Target Selection Logic (Both, Left Only, Right Only)
+    const btnBoth = document.getElementById('target-both');
+    const btnLeft = document.getElementById('target-left');
+    const btnRight = document.getElementById('target-right');
+    const sideTipText = document.getElementById('side-tip-text');
+
+    function setTargetMode(mode) {
+      activeTargetMode = mode;
+      btnBoth.className = mode === 'both' ? "flex-1 sm:flex-none px-3 py-1 bg-indigo-600 text-white font-bold rounded-lg text-xs transition" : "flex-1 sm:flex-none px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs transition";
+      btnLeft.className = mode === 'left' ? "flex-1 sm:flex-none px-3 py-1 bg-indigo-600 text-white font-bold rounded-lg text-xs transition" : "flex-1 sm:flex-none px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs transition";
+      btnRight.className = mode === 'right' ? "flex-1 sm:flex-none px-3 py-1 bg-indigo-600 text-white font-bold rounded-lg text-xs transition" : "flex-1 sm:flex-none px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-lg text-xs transition";
+
+      if (mode === 'both') {
+        sideTipText.innerText = "Applying operations to BOTH sides keeps the scale balanced!";
+      } else if (mode === 'left') {
+        sideTipText.innerText = "⚠️ Operating on LEFT side ONLY will unbalance the scale!";
+      } else {
+        sideTipText.innerText = "⚠️ Operating on RIGHT side ONLY will unbalance the scale!";
+      }
+    }
+
+    btnBoth.onclick = () => setTargetMode('both');
+    btnLeft.onclick = () => setTargetMode('left');
+    btnRight.onclick = () => setTargetMode('right');
+
+    // Operations Execution Engine
+    function applyOperation(opFn, labelText) {
+      if (activeTargetMode === 'both' || activeTargetMode === 'left') {
+        opFn(leftState);
+      }
+      if (activeTargetMode === 'both' || activeTargetMode === 'right') {
+        opFn(rightState);
+      }
+
+      let opSideLabel = "↓ (Both) ";
+      if (activeTargetMode === 'left') opSideLabel = "↓ (Left Only) ";
+      if (activeTargetMode === 'right') opSideLabel = "↓ (Right Only) ";
+
+      triggerHandAnim(activeTargetMode);
       playSound(440);
-      logStep('↓ + 1');
+      logStep(opSideLabel + labelText);
       updateUI();
+    }
+
+    document.getElementById('btn-add-1').onclick = () => {
+      applyOperation(state => state.unitVal++, '+ 1');
     };
 
     document.getElementById('btn-sub-1').onclick = () => {
-      leftState.unitVal--;
-      rightState.unitVal--;
-      triggerHandAnim();
-      playSound(380);
-      logStep('↓ - 1');
-      updateUI();
+      applyOperation(state => state.unitVal--, '- 1');
     };
 
     document.getElementById('btn-add-x').onclick = () => {
-      leftState.xCoef++;
-      rightState.xCoef++;
-      triggerHandAnim();
-      playSound(520);
-      logStep('↓ + x');
-      updateUI();
+      applyOperation(state => state.xCoef++, '+ x');
     };
 
     document.getElementById('btn-sub-x').onclick = () => {
-      if (leftState.xCoef > 0 && rightState.xCoef > 0) {
-        leftState.xCoef--;
-        rightState.xCoef--;
-        triggerHandAnim();
-        playSound(330);
-        logStep('↓ - x');
-        updateUI();
-      }
+      applyOperation(state => state.xCoef--, '- x');
     };
 
     document.getElementById('btn-mul-n').onclick = () => {
       const n = parseFloat(document.getElementById('input-n').value) || 2;
-      leftState.xCoef *= n;
-      leftState.unitVal *= n;
-      rightState.xCoef *= n;
-      rightState.unitVal *= n;
-      triggerHandAnim();
-      playSound(600);
-      logStep(`↓ × ${n}`);
-      updateUI();
+      applyOperation(state => {
+        state.xCoef *= n;
+        state.unitVal *= n;
+      }, `× ${n}`);
     };
 
     document.getElementById('btn-div-n').onclick = () => {
       const n = parseFloat(document.getElementById('input-n').value) || 2;
       if (n !== 0) {
-        leftState.xCoef /= n;
-        leftState.unitVal /= n;
-        rightState.xCoef /= n;
-        rightState.unitVal /= n;
-        triggerHandAnim();
-        playSound(280);
-        logStep(`↓ ÷ ${n}`);
-        updateUI();
+        applyOperation(state => {
+          state.xCoef /= n;
+          state.unitVal /= n;
+        }, `÷ ${n}`);
       }
     };
 
@@ -606,6 +622,7 @@
         leftState = parsed.left;
         rightState = parsed.right;
         stepLogs = [];
+        setTargetMode('both');
         logStep('Initial Equation');
         updateUI();
       }
