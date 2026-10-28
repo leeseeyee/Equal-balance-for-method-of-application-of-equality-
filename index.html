@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EquaBalance Scale - Linear Equations</title>
+  <title>EquaBalance Scale - Linear Equations & Trial & Improvement</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -89,16 +89,27 @@
   <div class="w-full max-w-5xl flex flex-col gap-4">
 
     <!-- Header & App Title -->
-    <header class="flex items-center justify-between bg-slate-800/80 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur">
+    <header class="flex flex-wrap items-center justify-between bg-slate-800/80 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur gap-3">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-xl font-bold shadow-md shadow-indigo-500/30">
           ⚖️
         </div>
         <div>
           <h1 class="text-xl md:text-2xl font-bold font-fredoka tracking-wide text-white">EquaBalance Scale</h1>
-          <p class="text-xs text-slate-400">Method of Application of Equality Visualizer</p>
+          <p class="text-xs text-slate-400">Algebra Balance & Trial and Improvement Visualizer</p>
         </div>
       </div>
+
+      <!-- Mode Switcher Tabs -->
+      <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-700">
+        <button id="tab-algebra" class="px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-bold bg-indigo-600 text-white transition">
+          ⚖️ Algebraic Balancing
+        </button>
+        <button id="tab-trial" class="px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-bold text-slate-400 hover:text-white transition">
+          🔍 Trial & Improvement
+        </button>
+      </div>
+
       <button id="btn-reset" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-xl text-xs md:text-sm transition flex items-center gap-2 shadow-md shadow-rose-900/30">
         🔄 Reset
       </button>
@@ -111,7 +122,7 @@
           Type Equation:
         </label>
         <div class="flex w-full gap-2">
-          <input type="text" id="eq-input" value="10x - 2 = 8" placeholder="e.g. 2x + 3 = 7" 
+          <input type="text" id="eq-input" value="2x + 3 = 11" placeholder="e.g. 2x + 3 = 11" 
                  class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-amber-400 font-bold font-mono text-base md:text-lg focus:outline-none focus:border-indigo-500 text-center sm:text-left transition">
           <button id="btn-load" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-indigo-900/40">
             Load
@@ -122,16 +133,15 @@
       <!-- Presets -->
       <div class="flex items-center gap-2 flex-wrap">
         <span class="text-xs text-slate-400">Presets:</span>
+        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="2x + 3 = 11">2x + 3 = 11</button>
+        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="3x - 2 = 10">3x - 2 = 10</button>
         <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="x - 2 = 4">x - 2 = 4</button>
-        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="2x + 3 = 7">2x + 3 = 7</button>
-        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="3x = 6">3x = 6</button>
-        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="1/2x = 4">1/2x = 4</button>
-        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="10x - 2 = 8">10x - 2 = 8</button>
+        <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="4x + 1 = 17">4x + 1 = 17</button>
         <button class="btn-preset px-3 py-1 bg-slate-700 hover:bg-slate-600 text-xs font-mono rounded-lg transition" data-eq="3x - 5 = 2x + 4">3x - 5 = 2x + 4</button>
       </div>
     </section>
 
-    <!-- Interactive Workspace Grid (Scale + Blackboard) -->
+    <!-- Interactive Workspace Grid (Scale + Blackboard / Trial Panel) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
       <!-- Interactive Scale Viewport -->
@@ -194,26 +204,91 @@
         </div>
       </section>
 
-      <!-- Step-by-Step Chalkboard Logger -->
+      <!-- Side Panel Switcher: Step Logger VS Trial & Improvement Tool -->
       <section class="bg-slate-950 p-4 md:p-5 rounded-2xl border border-slate-800 shadow-xl flex flex-col justify-between">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-2">
-            <span>📋</span> Algebraic Steps
-          </h2>
-          <span class="text-[10px] text-slate-500 font-mono">LIVE LOG</span>
+        
+        <!-- Panel 1: Algebraic Step Logger -->
+        <div id="panel-algebra-logger" class="flex flex-col h-full justify-between">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-emerald-400 font-mono flex items-center gap-2">
+              <span>📋</span> Algebraic Steps
+            </h2>
+            <span class="text-[10px] text-slate-500 font-mono">LIVE LOG</span>
+          </div>
+
+          <div id="board-steps" class="chalkboard-scroll my-3 flex-1 min-h-[220px] max-h-[280px] overflow-y-auto flex flex-col gap-2 font-mono text-xs md:text-sm text-slate-300">
+          </div>
+
+          <p id="side-tip-text" class="text-[11px] text-slate-400 text-center italic">
+            Whatever operation you apply to one side must be applied to the other side to keep equality!
+          </p>
         </div>
 
-        <div id="board-steps" class="chalkboard-scroll my-3 flex-1 min-h-[180px] max-h-[250px] overflow-y-auto flex flex-col gap-2 font-mono text-xs md:text-sm text-slate-300">
+        <!-- Panel 2: Trial & Improvement Interactive Section -->
+        <div id="panel-trial-section" class="hidden flex-col h-full justify-between gap-3">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-400 font-mono flex items-center gap-2">
+              🔍 Trial & Improvement
+            </h2>
+            <span class="text-[10px] bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded border border-cyan-800 font-mono">Guess x</span>
+          </div>
+
+          <!-- Trial Input Tool -->
+          <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 flex flex-col gap-2">
+            <label for="trial-x-input" class="text-xs text-slate-300 font-semibold flex items-center justify-between">
+              <span>Assume <span class="text-cyan-400 font-mono text-sm">x</span> = ?</span>
+              <span id="trial-actual-hint" class="text-[10px] text-slate-500">Test different values</span>
+            </label>
+            <div class="flex gap-2">
+              <input type="number" id="trial-x-input" step="0.5" value="1" placeholder="e.g. 3" 
+                     class="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-cyan-300 font-mono font-bold text-center focus:outline-none focus:border-cyan-500">
+              <button id="btn-test-trial" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg text-xs transition shadow-md shadow-cyan-950">
+                Test x
+              </button>
+            </div>
+            <!-- Quick Guess Buttons -->
+            <div class="flex items-center gap-1.5 justify-center pt-1">
+              <span class="text-[10px] text-slate-500">Quick:</span>
+              <button class="btn-quick-trial px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono" data-val="1">x=1</button>
+              <button class="btn-quick-trial px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono" data-val="2">x=2</button>
+              <button class="btn-quick-trial px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono" data-val="3">x=3</button>
+              <button class="btn-quick-trial px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono" data-val="4">x=4</button>
+              <button class="btn-quick-trial px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-mono" data-val="5">x=5</button>
+            </div>
+          </div>
+
+          <!-- History Table of Trials -->
+          <div class="flex-1 flex flex-col justify-start">
+            <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Trial History Log</h3>
+            <div class="chalkboard-scroll max-h-[140px] overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/50">
+              <table class="w-full text-left font-mono text-xs">
+                <thead class="bg-slate-950 text-slate-400 sticky top-0 border-b border-slate-800">
+                  <tr>
+                    <th class="p-1.5 text-center">x</th>
+                    <th class="p-1.5 text-center">Left Side</th>
+                    <th class="p-1.5 text-center">Right Side</th>
+                    <th class="p-1.5 text-center">Outcome</th>
+                  </tr>
+                </thead>
+                <tbody id="trial-history-body" class="divide-y divide-slate-800 text-slate-300">
+                  <tr>
+                    <td colspan="4" class="p-3 text-center text-slate-500 italic text-[11px]">No trial tested yet. Enter a value above!</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p class="text-[10px] text-slate-400 text-center italic">
+            Keep trying different x values to find which one makes Left Side = Right Side!
+          </p>
         </div>
 
-        <p id="side-tip-text" class="text-[11px] text-slate-400 text-center italic">
-          Whatever operation you apply to one side must be applied to the other side to keep equality!
-        </p>
       </section>
     </div>
 
-    <!-- Bottom Operations Toolbar -->
-    <section class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur flex flex-col gap-3">
+    <!-- Bottom Operations Toolbar (Algebra Mode Only) -->
+    <section id="toolbar-algebra-operations" class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 shadow-lg backdrop-blur flex flex-col gap-3">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
           <span>⚡</span> Action Target Side:
@@ -287,13 +362,20 @@
 
   <!-- Main Logic & Algebra Solver Engine -->
   <script>
-    let leftState = { xCoef: 1, unitVal: 0 };
-    let rightState = { xCoef: 0, unitVal: 0 };
+    let currentMode = 'algebra'; // 'algebra' or 'trial'
+
+    // Initial equation state
+    let initialLeftState = { xCoef: 2, unitVal: 3 };
+    let initialRightState = { xCoef: 0, unitVal: 11 };
+
+    let leftState = { ...initialLeftState };
+    let rightState = { ...initialRightState };
     let stepLogs = [];
+    let trialLogs = [];
     let activeTargetMode = 'both'; // 'both', 'left', 'right'
 
     // Value of x calculated from initial equation
-    let solvedXValue = 1;
+    let solvedXValue = 4;
 
     function parseSide(sideStr) {
       let xCoef = 0;
@@ -341,11 +423,19 @@
       return { left, right };
     }
 
-    // Dynamic Physical Weight: Weight = xCoef * solvedXValue + unitVal
+    // Dynamic Physical Weight calculation
     function getWeights() {
-      const leftW = leftState.xCoef * solvedXValue + leftState.unitVal;
-      const rightW = rightState.xCoef * solvedXValue + rightState.unitVal;
-      return { leftW, rightW, diff: leftW - rightW };
+      if (currentMode === 'algebra') {
+        const leftW = leftState.xCoef * solvedXValue + leftState.unitVal;
+        const rightW = rightState.xCoef * solvedXValue + rightState.unitVal;
+        return { leftW, rightW, diff: leftW - rightW };
+      } else {
+        // Trial and Improvement Mode: Weight calculated using assumed trial X
+        const assumedX = parseFloat(document.getElementById('trial-x-input').value) || 0;
+        const leftW = initialLeftState.xCoef * assumedX + initialLeftState.unitVal;
+        const rightW = initialRightState.xCoef * assumedX + initialRightState.unitVal;
+        return { leftW, rightW, diff: leftW - rightW, assumedX };
+      }
     }
 
     function formatSideText(state) {
@@ -432,7 +522,6 @@
           container.appendChild(sphere);
         }
       } else if (state.unitVal < 0) {
-        // Cutout Hole Spheres (-1)
         const holeUnits = Math.abs(Math.round(state.unitVal));
         for (let i = 0; i < holeUnits; i++) {
           const holeSphere = document.createElement('div');
@@ -446,9 +535,9 @@
 
     // Scale Physics Update (Tilt Beam based on actual weight difference)
     function updateScalePhysics() {
-      const { diff } = getWeights();
-      const maxAngle = 14;
-      const angle = Math.max(-maxAngle, Math.min(maxAngle, diff * 2.5));
+      const { leftW, rightW, diff, assumedX } = getWeights();
+      const maxAngle = 16;
+      const angle = Math.max(-maxAngle, Math.min(maxAngle, diff * 2.2));
 
       document.getElementById('scale-beam-group').style.transform = `rotate(${angle}deg)`;
       document.getElementById('scale-pan-left-group').style.transform = `rotate(${-angle}deg)`;
@@ -459,34 +548,53 @@
       const mascotText = document.getElementById('mascot-text');
       const statusEl = document.getElementById('equation-status');
 
-      if (Math.abs(diff) < 0.01) {
-        statusEl.innerText = "BALANCED";
-        statusEl.className = "text-emerald-400 font-bold";
-        mascotText.innerText = "Scale is balanced! Equality is preserved.";
-        bubble.className = "speech-bubble bg-emerald-900/90 border border-emerald-500 text-emerald-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
+      if (currentMode === 'algebra') {
+        if (Math.abs(diff) < 0.01) {
+          statusEl.innerText = "BALANCED";
+          statusEl.className = "text-emerald-400 font-bold";
+          mascotText.innerText = "Scale is balanced! Equality is preserved.";
+          bubble.className = "speech-bubble bg-emerald-900/90 border border-emerald-500 text-emerald-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
 
-        if ((leftState.xCoef === 1 && leftState.unitVal === 0 && rightState.xCoef === 0) ||
-            (rightState.xCoef === 1 && rightState.unitVal === 0 && leftState.xCoef === 0)) {
-          confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
-          playSound(587.33, 'sine', 0.4);
+          if ((leftState.xCoef === 1 && leftState.unitVal === 0 && rightState.xCoef === 0) ||
+              (rightState.xCoef === 1 && rightState.unitVal === 0 && leftState.xCoef === 0)) {
+            confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+            playSound(587.33, 'sine', 0.4);
+          }
+        } else {
+          statusEl.innerText = "UNBALANCED";
+          statusEl.className = "text-rose-400 font-bold";
+          mascotText.innerText = diff > 0 ? "⚠️ Unbalanced! Left side is heavier." : "⚠️ Unbalanced! Right side is heavier.";
+          bubble.className = "speech-bubble bg-rose-900/90 border border-rose-500 text-rose-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
+          playSound(220, 'sawtooth', 0.1);
         }
       } else {
-        statusEl.innerText = "UNBALANCED";
-        statusEl.className = "text-rose-400 font-bold";
-        if (diff > 0) {
-          mascotText.innerText = "⚠️ Unbalanced! Left side is heavier.";
+        // Trial and Improvement Physics Feedback
+        if (Math.abs(diff) < 0.01) {
+          statusEl.innerText = "MATCH FOUND!";
+          statusEl.className = "text-emerald-400 font-bold";
+          mascotText.innerText = `🎯 Perfect! When x = ${assumedX}, Left (${leftW}) = Right (${rightW}). Equation solved!`;
+          bubble.className = "speech-bubble bg-emerald-900/90 border border-emerald-500 text-emerald-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
+          confetti({ particleCount: 90, spread: 70, origin: { y: 0.7 } });
+          playSound(587.33, 'sine', 0.4);
+        } else if (diff > 0) {
+          statusEl.innerText = "TOO HEAVY";
+          statusEl.className = "text-amber-400 font-bold";
+          mascotText.innerText = `📈 x = ${assumedX} makes Left Side (${leftW}) TOO HEAVY compared to Right Side (${rightW}). Try a SMALLER x!`;
+          bubble.className = "speech-bubble bg-amber-900/90 border border-amber-500 text-amber-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
+          playSound(280, 'triangle', 0.2);
         } else {
-          mascotText.innerText = "⚠️ Unbalanced! Right side is heavier.";
+          statusEl.innerText = "TOO LIGHT";
+          statusEl.className = "text-cyan-400 font-bold";
+          mascotText.innerText = `📉 x = ${assumedX} makes Left Side (${leftW}) TOO LIGHT compared to Right Side (${rightW}). Try a LARGER x!`;
+          bubble.className = "speech-bubble bg-cyan-900/90 border border-cyan-500 text-cyan-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
+          playSound(340, 'triangle', 0.2);
         }
-        bubble.className = "speech-bubble bg-rose-900/90 border border-rose-500 text-rose-200 text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center gap-2";
-        playSound(220, 'sawtooth', 0.1);
       }
     }
 
     function logStep(opText) {
       const leftStr = formatSideText(leftState);
       const rightStr = formatSideText(rightState);
-
       const eqSymbol = Math.abs(getWeights().diff) < 0.01 ? '=' : '≠';
 
       stepLogs.push({ type: opText, leftStr, rightStr, eqSymbol });
@@ -519,9 +627,62 @@
       board.scrollTop = board.scrollHeight;
     }
 
+    // Trial and Improvement Logic
+    function testTrialValue(val) {
+      const assumedX = parseFloat(val);
+      if (isNaN(assumedX)) return;
+
+      document.getElementById('trial-x-input').value = assumedX;
+
+      const leftW = initialLeftState.xCoef * assumedX + initialLeftState.unitVal;
+      const rightW = initialRightState.xCoef * assumedX + initialRightState.unitVal;
+      const diff = leftW - rightW;
+
+      let outcome = "";
+      let outcomeClass = "";
+
+      if (Math.abs(diff) < 0.01) {
+        outcome = "✅ Balanced!";
+        outcomeClass = "text-emerald-400 font-bold";
+      } else if (diff > 0) {
+        outcome = "📈 Too Heavy";
+        outcomeClass = "text-amber-400 font-bold";
+      } else {
+        outcome = "📉 Too Light";
+        outcomeClass = "text-cyan-400 font-bold";
+      }
+
+      // Add to trial logs (avoid duplicates if same consecutive)
+      trialLogs.unshift({ x: assumedX, leftW, rightW, outcome, outcomeClass });
+      renderTrialHistory();
+      updateScalePhysics();
+    }
+
+    function renderTrialHistory() {
+      const tbody = document.getElementById('trial-history-body');
+      tbody.innerHTML = '';
+
+      if (trialLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-slate-500 italic text-[11px]">No trial tested yet. Enter a value above!</td></tr>`;
+        return;
+      }
+
+      trialLogs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-800/60 transition";
+        tr.innerHTML = `
+          <td class="p-1.5 text-center font-bold text-cyan-300">${log.x}</td>
+          <td class="p-1.5 text-center">${log.leftW}</td>
+          <td class="p-1.5 text-center">${log.rightW}</td>
+          <td class="p-1.5 text-center ${log.outcomeClass}">${log.outcome}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
     function updateUI() {
-      renderPan('pan-left-container', leftState);
-      renderPan('pan-right-container', rightState);
+      renderPan('pan-left-container', currentMode === 'algebra' ? leftState : initialLeftState);
+      renderPan('pan-right-container', currentMode === 'algebra' ? rightState : initialRightState);
       updateScalePhysics();
     }
 
@@ -537,6 +698,38 @@
         hRight.classList.remove('active');
       }, 500);
     }
+
+    // Mode Switcher Logic (Algebraic Balancing vs Trial & Improvement)
+    const tabAlgebra = document.getElementById('tab-algebra');
+    const tabTrial = document.getElementById('tab-trial');
+    const panelAlgebraLogger = document.getElementById('panel-algebra-logger');
+    const panelTrialSection = document.getElementById('panel-trial-section');
+    const toolbarAlgebraOperations = document.getElementById('toolbar-algebra-operations');
+
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'algebra') {
+        tabAlgebra.className = "px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-bold bg-indigo-600 text-white transition";
+        tabTrial.className = "px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-bold text-slate-400 hover:text-white transition";
+        panelAlgebraLogger.classList.remove('hidden');
+        panelAlgebraLogger.classList.add('flex');
+        panelTrialSection.classList.add('hidden');
+        panelTrialSection.classList.remove('flex');
+        toolbarAlgebraOperations.classList.remove('hidden');
+      } else {
+        tabTrial.className = "px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-bold bg-cyan-600 text-white transition";
+        tabAlgebra.className = "px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-bold text-slate-400 hover:text-white transition";
+        panelTrialSection.classList.remove('hidden');
+        panelTrialSection.classList.add('flex');
+        panelAlgebraLogger.classList.add('hidden');
+        panelAlgebraLogger.classList.remove('flex');
+        toolbarAlgebraOperations.classList.add('hidden');
+      }
+      updateUI();
+    }
+
+    tabAlgebra.onclick = () => setMode('algebra');
+    tabTrial.onclick = () => setMode('trial');
 
     // Target Selection Logic (Both, Left Only, Right Only)
     const btnBoth = document.getElementById('target-both');
@@ -563,7 +756,7 @@
     btnLeft.onclick = () => setTargetMode('left');
     btnRight.onclick = () => setTargetMode('right');
 
-    // Operations Execution Engine
+    // Operations Execution Engine (Algebra mode)
     function applyOperation(opFn, labelText) {
       if (activeTargetMode === 'both' || activeTargetMode === 'left') {
         opFn(leftState);
@@ -582,21 +775,10 @@
       updateUI();
     }
 
-    document.getElementById('btn-add-1').onclick = () => {
-      applyOperation(state => state.unitVal++, '+ 1');
-    };
-
-    document.getElementById('btn-sub-1').onclick = () => {
-      applyOperation(state => state.unitVal--, '- 1');
-    };
-
-    document.getElementById('btn-add-x').onclick = () => {
-      applyOperation(state => state.xCoef++, '+ x');
-    };
-
-    document.getElementById('btn-sub-x').onclick = () => {
-      applyOperation(state => state.xCoef--, '- x');
-    };
+    document.getElementById('btn-add-1').onclick = () => applyOperation(state => state.unitVal++, '+ 1');
+    document.getElementById('btn-sub-1').onclick = () => applyOperation(state => state.unitVal--, '- 1');
+    document.getElementById('btn-add-x').onclick = () => applyOperation(state => state.xCoef++, '+ x');
+    document.getElementById('btn-sub-x').onclick = () => applyOperation(state => state.xCoef--, '- x');
 
     document.getElementById('btn-mul-n').onclick = () => {
       const n = parseFloat(document.getElementById('input-n').value) || 2;
@@ -616,14 +798,30 @@
       }
     };
 
+    // Trial and Improvement Control Event Listeners
+    document.getElementById('btn-test-trial').onclick = () => {
+      testTrialValue(document.getElementById('trial-x-input').value);
+    };
+
+    document.querySelectorAll('.btn-quick-trial').forEach(btn => {
+      btn.onclick = () => {
+        const val = btn.getAttribute('data-val');
+        testTrialValue(val);
+      };
+    });
+
     function loadEquation(eqStr) {
       const parsed = parseEquation(eqStr);
       if (parsed) {
-        leftState = parsed.left;
-        rightState = parsed.right;
+        initialLeftState = parsed.left;
+        initialRightState = parsed.right;
+        leftState = { ...parsed.left };
+        rightState = { ...parsed.right };
         stepLogs = [];
+        trialLogs = [];
         setTargetMode('both');
         logStep('Initial Equation');
+        renderTrialHistory();
         updateUI();
       }
     }
@@ -645,8 +843,8 @@
     };
 
     // Initial Load
-    loadEquation('10x - 2 = 8');
+    loadEquation('2x + 3 = 11');
   </script>
 </body>
 </html>
-```
+``` 
